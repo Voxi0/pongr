@@ -30,17 +30,18 @@ impl Ball {
         });
     }
 
-    pub fn update(&mut self, winWidth: f32, winHeight: f32, frameTime: f32) {
+    pub fn update(&mut self, winHeight: f32, frameTime: f32) {
+        // Ensure ball doesn't go out of the screen
         if self.pos.y < 0.0 {
             self.pos.y = 0.0;
             self.vel.y *= -1.0;
         }
-
         else if (self.pos.y + self.size) > winHeight {
             self.pos.y = winHeight - self.size;
             self.vel.y *= -1.0;
         }
 
+        // Move the ball
         self.pos += self.vel * self.moveSpeed * frameTime;
     }
 
@@ -50,9 +51,41 @@ impl Ball {
 
     pub fn checkCollision(&mut self, rect: &Rectangle) {
         let collisionRect: Rectangle = Rectangle::new(self.pos.x, self.pos.y, self.size, self.size);
+
         if collisionRect.check_collision_recs(rect) {
-            self.vel.x *= -1.0;
+            let overlap: Rectangle = collisionRect.get_collision_rec(rect)
+                .expect("Failed to get collision rec");
+
+            if overlap.width < overlap.height {
+                self.vel.x *= -1.0;
+
+                // The ball hit the right paddle
+                if self.vel.x > 0.0 {
+                    self.pos.x = rect.x + rect.width;
+                }
+
+                // The ball hit the left paddle
+                else {
+                    self.pos.x = rect.x - self.size;
+                }
+            }
+
+            else {
+                self.vel.y *= -1.0;
+
+                if self.pos.y < rect.y {
+                    self.pos.y = rect.y - self.size;
+                }
+
+                else {
+                    self.pos.y = rect.y + rect.height;
+                }
+            }
         }
+    }
+
+    pub fn reset(&mut self, winWidth: f32, winHeight: f32) {
+        self.pos = Vector2::new(winWidth / 2.0, winHeight / 2.0);
     }
 
     pub fn getPos(&self) -> Vector2 {return self.pos;}

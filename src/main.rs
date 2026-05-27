@@ -15,6 +15,17 @@ const WIN_TITLE: &str = "Pongr";
 const WIN_WIDTH: f32 = 1920.0;
 const WIN_HEIGHT: f32 = 1080.0;
 
+// Colors
+const BG_COLOR: Color = Color::BLACK;
+const PADDLE_COLOR: Color = Color::WHITE;
+const BALL_COLOR: Color = Color::GREEN;
+const TEXT_COLOR: Color = Color::GREEN;
+
+// UI
+const UI_FONT_SIZE: f32 = 40.0;
+const SCORES_POS_Y: f32 = 30.0;
+const SCORES_GAP_FROM_LINE: f32 = 20.0;
+
 fn main() {
     // Initialize Raylib
     let (mut rl, thread) = sola_raylib::init()
@@ -23,6 +34,18 @@ fn main() {
         .msaa_4x()
         .vsync()
         .build();
+
+    // So I don't have to constantly call this function
+    let defaultFont: WeakFont = rl.get_font_default();
+
+    // Vertical line split in the middle
+    let lineStartPos: Vector2 = Vector2::new(WIN_WIDTH / 2.0, 0.0);
+    let lineEndPos: Vector2 = Vector2::new(WIN_WIDTH / 2.0, WIN_HEIGHT);
+
+    // Player scoreboard
+    let (mut player1Score, mut player2Score): (u32, u32) = (0, 0);
+    let player1ScorePos: Vector2 = Vector2::new(lineStartPos.x - SCORES_GAP_FROM_LINE, SCORES_POS_Y);
+    let player2ScorePos: Vector2 = Vector2::new(lineStartPos.x + SCORES_GAP_FROM_LINE, SCORES_POS_Y);
 
     // Render texture
     let mut renderTexture: RenderTexture2D = rl.load_render_texture(&thread, WIN_WIDTH as u32, WIN_HEIGHT as u32)
@@ -41,13 +64,13 @@ fn main() {
     };
 
     // Ball
-    let mut ball: Ball = Ball::new(WIN_WIDTH, WIN_HEIGHT, 500.0, 16.0, Color::RED)
+    let mut ball: Ball = Ball::new(WIN_WIDTH, WIN_HEIGHT, 500.0, 16.0, BALL_COLOR)
         .expect("Failed to create the ball");
 
     // Paddles/Players
-    let mut player1: Paddle = Paddle::new(WIN_HEIGHT, 10.0, KeyboardKey::KEY_W, KeyboardKey::KEY_S, Color::RED)
+    let mut player1: Paddle = Paddle::new(WIN_HEIGHT, 10.0, KeyboardKey::KEY_W, KeyboardKey::KEY_S, PADDLE_COLOR)
         .expect("Failed to create player 1");
-    let mut player2: Paddle = Paddle::new(WIN_HEIGHT, 0.0, KeyboardKey::KEY_UP, KeyboardKey::KEY_DOWN, Color::RED)
+    let mut player2: Paddle = Paddle::new(WIN_HEIGHT, 0.0, KeyboardKey::KEY_UP, KeyboardKey::KEY_DOWN, PADDLE_COLOR)
         .expect("Failed to create player 2");
     player2.pos.x = WIN_WIDTH - (10.0 + player2.size.x);
 
@@ -57,35 +80,56 @@ fn main() {
         {
             let frameTime: f32 = rl.get_frame_time();
 
-            ball.update(WIN_WIDTH, WIN_HEIGHT, frameTime);
+            // Handle movement
+            ball.update(WIN_HEIGHT, frameTime);
             player1.update(WIN_HEIGHT, &mut rl, frameTime);
             player2.update(WIN_HEIGHT, &mut rl, frameTime);
 
+            // Handle collisions
             ball.checkCollision(&player1.getCollisionRect());
             ball.checkCollision(&player2.getCollisionRect());
-
-            if ball.getPos().x < 0.0 {
-                println!("player 2 wins");
-            }
-            else if ball.getPos().x > WIN_WIDTH {
-                println!("player 1 wins");
-            }
         }
 
-        // Draw/Render everything onto a texture
+        // Draw everything onto a texture
         {
             let mut mode = rl.begin_texture_mode(&thread, &mut renderTexture);
-            mode.clear_background(Color::WHITE);
+            mode.clear_background(BG_COLOR);
+
+            // Draw game objects
             ball.draw(&mut mode);
             player1.draw(&mut mode);
             player2.draw(&mut mode);
+
+            // Keep check of the player's scores
+            if ball.getPos().x > WIN_WIDTH {
+                player1Score += 1;
+                ball.reset(WIN_WIDTH, WIN_HEIGHT);
+            }
+            else if ball.getPos().x < 0.0 {
+                player2Score += 1;
+                ball.reset(WIN_WIDTH, WIN_HEIGHT);
+            }
+
+            // Display the scores
+            let player1Score: String = format!("{}", player1Score);
+            let player2Score: String = format!("{}", player2Score);
+            mode.draw_text_pro(&defaultFont, &player1Score, player1ScorePos, Vector2::new(mode.measure_text(&player1Score, UI_FONT_SIZE as i32) as f32, 0.0), 0.0, UI_FONT_SIZE, 1.0, TEXT_COLOR);
+            mode.draw_text_pro(&defaultFont, &player2Score, player2ScorePos, Vector2::new(0.0, 0.0), 0.0, UI_FONT_SIZE, 1.0, TEXT_COLOR);
+
+            // Draw a vertical line split
+            mode.draw_line_v(lineStartPos, lineEndPos, TEXT_COLOR);
+
+            // Display the FPS duh
             mode.draw_fps(10, 10);
         }
 
-        // Draw/Render the texture with everything on it
+        // Draw the texture with everything on it
         {
+            // Resize the texture to ensure it fits on the screen
             dstRect.width = rl.get_screen_width() as f32;
             dstRect.height = rl.get_screen_height() as f32;
+
+            // Draw the texture
             let mut d: RaylibDrawHandle = rl.begin_drawing(&thread);
             d.draw_texture_pro(&renderTexture, srcRect, dstRect, Vector2::new(0.0, 0.0), 0.0, Color::WHITE);
         }
