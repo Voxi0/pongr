@@ -17,18 +17,26 @@
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
         RUSTFLAGS = "-lX11";
 
-        # Build toolchain and dependencies/libraries
+        # Build toolchain
         nativeBuildInputs = with pkgs; [
           cargo
           gcc
           cmake
           pkg-config
         ];
+
+        # Dependencies/Libraries
         buildInputs = with pkgs; [
+          # Wayland
           glfw3
           wayland
 
+          # Xorg stuff that's required for some reason
           libX11
+          libxrandr
+          libxinerama
+          libxcursor
+          libxi
         ];
       };
     });
