@@ -77,8 +77,9 @@ fn main() {
     player2.pos.x = WIN_WIDTH - (10.0 + player2.size.x);
 
     // Timer
-    let mut timer: Timer = Timer::new(2.0)
-        .expect("Failed to create a timer for the ball respawn");
+    let mut timer: Timer = Timer {
+        lifeTime: 2.0,
+    };
 
     // Main loop
     while !rl.window_should_close() {
@@ -109,11 +110,11 @@ fn main() {
             // Keep check of the player's scores
             if ball.getPos().x > WIN_WIDTH {
                 player1Score += 1;
-                ball.reset(&mut mode, WIN_WIDTH, WIN_HEIGHT, timer);
+                ball.reset(&mut mode, WIN_WIDTH, WIN_HEIGHT);
             }
             else if ball.getPos().x < 0.0 {
                 player2Score += 1;
-                ball.reset(&mut mode, WIN_WIDTH, WIN_HEIGHT, timer);
+                ball.reset(&mut mode, WIN_WIDTH, WIN_HEIGHT);
             }
 
             // Display the scores

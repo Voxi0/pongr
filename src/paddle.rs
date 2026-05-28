@@ -17,7 +17,7 @@ impl Paddle {
         return Ok(Self {
             pos: Vector2::new(posX, (winHeight - size.y) / 2.0),
             size: size,
-            moveSpeed: 400.0,
+            moveSpeed: 600.0,
             upKey: upKey,
             downKey: downKey,
             color: color,

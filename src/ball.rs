@@ -1,6 +1,10 @@
 // Raylib
 use sola_raylib::prelude::*;
 
+// Timer
+mod timer;
+use timer::*;
+
 pub struct Ball {
     pos: Vector2,
     vel: Vector2,
@@ -84,8 +88,17 @@ impl Ball {
         }
     }
 
-    pub fn reset(&mut self, winWidth: f32, winHeight: f32) {
+    pub fn reset(&mut self, rl: &mut RaylibHandle, winWidth: f32, winHeight: f32, timer: &mut Timer) {
+        // Put the ball back in the center and remove its velocity
         self.pos = Vector2::new(winWidth / 2.0, winHeight / 2.0);
+        self.vel = Vector2::new(0.0, 0.0);
+
+        while !timer.done() {
+            timer.update(&mut rl);
+        }
+        if timer.done {
+            self.vel = Vector2::new(-1.0, 1.0);
+        }
     }
 
     pub fn getPos(&self) -> Vector2 {return self.pos;}
