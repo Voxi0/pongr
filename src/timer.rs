@@ -1,5 +1,3 @@
-use sola_raylib::prelude::*;
-
 pub struct Timer {
     lifeTime: f64,
 }
@@ -17,13 +15,19 @@ impl Timer {
         });
     }
 
-    pub fn update(&mut self, rl: &mut RaylibHandle) {
+    pub fn update(&mut self, frameTime: f64) {
         if self.lifeTime > 0.0 {
-            self.lifeTime -= rl.get_frame_time() as f64;
+            self.lifeTime -= frameTime;
         }
     }
 
-    pub fn timerDone(&self) -> bool {
+    pub fn done(&self) -> bool {
         return self.lifeTime <= 0.0;
+    }
+
+    pub fn setLifeTime(&mut self, lifeTime: f64) {
+        if self.lifeTime <= 0.0 {
+            self.lifeTime = lifeTime;
+        }
     }
 }

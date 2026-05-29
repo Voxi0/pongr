@@ -1,10 +1,17 @@
 // Raylib
 use sola_raylib::prelude::*;
 
-// Timer
-mod timer;
-use timer::*;
+// Simple timer
+use crate::timer::*;
 
+// Structs/Types
+pub struct BallBuilder {
+    pos: Option<Vector2>,
+    vel: Vector2,
+    pub moveSpeed: f32,
+    pub size: f32,
+    pub color: Color,
+}
 pub struct Ball {
     pos: Vector2,
     vel: Vector2,
@@ -12,29 +19,77 @@ pub struct Ball {
     pub size: f32,
     pub color: Color,
 }
-impl Ball {
-    pub fn new(winWidth: f32, winHeight: f32, moveSpeed: f32, size: f32, color: Color) -> Result<Self, String> {
+
+// Ball Builder
+impl BallBuilder {
+    // Create a new Ball builder
+    pub fn new() -> Self {
+        return Self {
+            pos: None,
+            vel: Vector2::new(1.0, 1.0),
+            moveSpeed: 650.0,
+            size: 16.0,
+            color: Color::RED,
+        };
+    }
+
+    // Create and return an instance of Ball
+    pub fn build(self) -> Result<Ball, String> {
         // Ensure movement speed is greater than 0
-        if moveSpeed <= 0.0 {
+        if self.moveSpeed <= 0.0 {
             return Err("Movement speed has to be a non-zero and positive value".to_string())
         }
 
         // Ensure ball isn't too small
-        if size <= 0.0 {
+        if self.size <= 0.0 {
             return Err("Ball size has to be greater than 0".to_string());
         }
 
         // Everything checks out, return an instance of the ball struct
-        return Ok(Self {
-            pos: Vector2::new(winWidth / 2.0, winHeight / 2.0),
-            vel: Vector2::new(1.0, 1.0),
-            moveSpeed: moveSpeed,
-            size: size,
-            color: color,
+        return Ok(Ball {
+            pos: self.pos.unwrap(),
+            vel: self.vel,
+            moveSpeed: self.moveSpeed,
+            size: self.size,
+            color: self.color,
         });
     }
 
-    pub fn update(&mut self, winHeight: f32, frameTime: f32) {
+    // Setters
+    pub fn pos(mut self, pos: Vector2) -> Self {
+        self.pos = Some(pos);
+        return self;
+    }
+    pub fn velocity(mut self, vel: Vector2) -> Self {
+        self.vel = vel;
+        return self;
+    }
+    pub fn moveSpeed(mut self, moveSpeed: f32) -> Self {
+        self.moveSpeed = moveSpeed;
+        return self;
+    }
+    pub fn size(mut self, size: f32) -> Self {
+        self.size = size;
+        return self;
+    }
+    pub fn color(mut self, color: Color) -> Self {
+        self.color = color;
+        return self;
+    }
+}
+
+// Ball
+impl Ball {
+    pub fn update(&mut self, winHeight: f32, timer: &mut Timer, frameTime: f32) {
+        if !timer.done() {
+            timer.update(frameTime as f64);
+            return;
+        }
+
+        if self.vel.x == 0.0 && self.vel.y == 0.0 {
+            self.vel = Vector2::new(-1.0, 1.0);
+        }
+
         // Ensure ball doesn't go out of the screen
         if self.pos.y < 0.0 {
             self.pos.y = 0.0;
@@ -88,17 +143,11 @@ impl Ball {
         }
     }
 
-    pub fn reset(&mut self, rl: &mut RaylibHandle, winWidth: f32, winHeight: f32, timer: &mut Timer) {
+    pub fn reset(&mut self, winWidth: f32, winHeight: f32, timer: &mut Timer) {
         // Put the ball back in the center and remove its velocity
         self.pos = Vector2::new(winWidth / 2.0, winHeight / 2.0);
         self.vel = Vector2::new(0.0, 0.0);
-
-        while !timer.done() {
-            timer.update(&mut rl);
-        }
-        if timer.done {
-            self.vel = Vector2::new(-1.0, 1.0);
-        }
+        timer.setLifeTime(2.0);
     }
 
     pub fn getPos(&self) -> Vector2 {return self.pos;}

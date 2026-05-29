@@ -6,7 +6,7 @@ use sola_raylib::prelude::*;
 // Import files
 mod ball;
 mod paddle;
-mod timer;
+pub mod timer;
 use ball::*;
 use paddle::*;
 use timer::*;
@@ -19,14 +19,23 @@ const WIN_HEIGHT: f32 = 1080.0;
 
 // Colors
 const BG_COLOR: Color = Color::BLACK;
-const PADDLE_COLOR: Color = Color::WHITE;
 const BALL_COLOR: Color = Color::GREEN;
+const PADDLE_COLOR: Color = Color::WHITE;
 const TEXT_COLOR: Color = Color::GREEN;
 
 // UI
 const UI_FONT_SIZE: f32 = 40.0;
 const SCORES_POS_Y: f32 = 30.0;
 const SCORES_GAP_FROM_LINE: f32 = 20.0;
+
+// Ball
+const BALL_POS: Vector2 = Vector2::new(WIN_WIDTH / 2.0, WIN_HEIGHT / 2.0);
+const BALL_SIZE: f32 = 16.0;
+const BALL_MOVE_SPEED: f32 = 700.0;
+
+// Paddle
+const PADDLE_SIZE: Vector2 = Vector2::new(14.0, 120.0);
+const PADDLE_MOVE_SPEED: f32 = 650.0;
 
 fn main() {
     // Initialize Raylib
@@ -66,15 +75,35 @@ fn main() {
     };
 
     // Ball
-    let mut ball: Ball = Ball::new(WIN_WIDTH, WIN_HEIGHT, 700.0, 16.0, BALL_COLOR)
-        .expect("Failed to create the ball");
+    let mut ball: Ball = BallBuilder::new()
+        .pos(BALL_POS)
+        .velocity(Vector2::new(1.0, 1.0))
+        .moveSpeed(BALL_MOVE_SPEED)
+        .size(BALL_SIZE)
+        .color(BALL_COLOR)
+        .build()
+        .expect("Failed to create a ball");
 
     // Paddles/Players
-    let mut player1: Paddle = Paddle::new(WIN_HEIGHT, 10.0, KeyboardKey::KEY_W, KeyboardKey::KEY_S, PADDLE_COLOR)
+    let mut player1: Paddle = PaddleBuilder::new()
+        .pos(Vector2::new(PADDLE_SIZE.x + 10.0, (WIN_HEIGHT - PADDLE_SIZE.y) / 2.0))
+        .size(PADDLE_SIZE)
+        .moveSpeed(PADDLE_MOVE_SPEED)
+        .color(PADDLE_COLOR)
+        .upKey(KeyboardKey::KEY_UP)
+        .downKey(KeyboardKey::KEY_DOWN)
+        .build()
         .expect("Failed to create player 1");
-    let mut player2: Paddle = Paddle::new(WIN_HEIGHT, 0.0, KeyboardKey::KEY_UP, KeyboardKey::KEY_DOWN, PADDLE_COLOR)
+
+    let mut player2: Paddle = PaddleBuilder::new()
+        .pos(Vector2::new(WIN_WIDTH - (PADDLE_SIZE.x + 10.0), (WIN_HEIGHT - PADDLE_SIZE.y) / 2.0))
+        .size(PADDLE_SIZE)
+        .moveSpeed(PADDLE_MOVE_SPEED)
+        .color(PADDLE_COLOR)
+        .upKey(KeyboardKey::KEY_W)
+        .downKey(KeyboardKey::KEY_S)
+        .build()
         .expect("Failed to create player 2");
-    player2.pos.x = WIN_WIDTH - (10.0 + player2.size.x);
 
     // Timer
     let mut timer: Timer = Timer::new(2.0)
@@ -87,7 +116,7 @@ fn main() {
             let frameTime: f32 = rl.get_frame_time();
 
             // Handle movement
-            ball.update(WIN_HEIGHT, frameTime);
+            ball.update(WIN_HEIGHT, &mut timer, frameTime);
             player1.update(WIN_HEIGHT, &mut rl, frameTime);
             player2.update(WIN_HEIGHT, &mut rl, frameTime);
 
@@ -109,11 +138,11 @@ fn main() {
             // Keep check of the player's scores
             if ball.getPos().x > WIN_WIDTH {
                 player1Score += 1;
-                ball.reset(&mut mode, WIN_WIDTH, WIN_HEIGHT, timer);
+                ball.reset(WIN_WIDTH, WIN_HEIGHT, &mut timer);
             }
             else if ball.getPos().x < 0.0 {
                 player2Score += 1;
-                ball.reset(&mut mode, WIN_WIDTH, WIN_HEIGHT, timer);
+                ball.reset(WIN_WIDTH, WIN_HEIGHT, &mut timer);
             }
 
             // Display the scores

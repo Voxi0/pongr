@@ -1,6 +1,14 @@
 // Raylib
 use sola_raylib::prelude::*;
 
+pub struct PaddleBuilder {
+    pos: Vector2,
+    size: Vector2,
+    moveSpeed: f32,
+    color: Color,
+    upKey: Option<KeyboardKey>,
+    downKey: Option<KeyboardKey>,
+}
 pub struct Paddle {
     pub pos: Vector2,
     pub size: Vector2,
@@ -9,21 +17,61 @@ pub struct Paddle {
     upKey: KeyboardKey,
     downKey: KeyboardKey,
 }
-impl Paddle {
-    pub fn new(winHeight: f32, posX: f32, upKey: KeyboardKey, downKey: KeyboardKey, color: Color) -> Result<Self, String> {
-        let size: Vector2 = Vector2::new(14.0, 120.0);
 
-        // Everything checks out, return an instance of the paddle struct
-        return Ok(Self {
-            pos: Vector2::new(posX, (winHeight - size.y) / 2.0),
-            size: size,
+// Paddle builder
+impl PaddleBuilder {
+    pub fn new() -> Self {
+        let defaultPaddleSize: Vector2 = Vector2::new(14.0, 120.0);
+
+        return Self {
+            pos: Vector2::new(defaultPaddleSize.x + 10.0, defaultPaddleSize.y + 10.0),
+            size: defaultPaddleSize,
             moveSpeed: 600.0,
-            upKey: upKey,
-            downKey: downKey,
-            color: color,
+            color: Color::RED,
+            upKey: None,
+            downKey: None,
+        };
+    }
+
+    pub fn build(&self) -> Result<Paddle, String> {
+        return Ok(Paddle {
+            pos: self.pos,
+            size: self.size,
+            moveSpeed: self.moveSpeed,
+            upKey: self.upKey.unwrap_or(KeyboardKey::KEY_UP),
+            downKey: self.downKey.unwrap_or(KeyboardKey::KEY_DOWN),
+            color: self.color,
         });
     }
 
+    // Setters
+    pub fn pos(mut self, pos: Vector2) -> Self {
+        self.pos = pos;
+        return self;
+    }
+    pub fn size(mut self, size: Vector2) -> Self {
+        self.size = size;
+        return self;
+    }
+    pub fn moveSpeed(mut self, moveSpeed: f32) -> Self {
+        self.moveSpeed = moveSpeed;
+        return self;
+    }
+    pub fn color(mut self, color: Color) -> Self {
+        self.color = color;
+        return self;
+    }
+    pub fn upKey(mut self, upKey: KeyboardKey) -> Self {
+        self.upKey = Some(upKey);
+        return self;
+    }
+    pub fn downKey(mut self, downKey: KeyboardKey) -> Self {
+        self.downKey = Some(downKey);
+        return self;
+    }
+}
+
+impl Paddle {
     pub fn update(&mut self, winHeight: f32, rl: &mut RaylibHandle, frameTime: f32) {
         if rl.is_key_down(self.upKey) && self.pos.y > 0.0 {
             self.pos.y -= self.moveSpeed * frameTime;
