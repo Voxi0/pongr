@@ -1,6 +1,9 @@
 // Raylib
 use sola_raylib::prelude::*;
 
+// Random
+use rand::prelude::*;
+
 // Simple timer
 use crate::timer::*;
 
@@ -81,13 +84,30 @@ impl BallBuilder {
 // Ball
 impl Ball {
     pub fn update(&mut self, winHeight: f32, timer: &mut Timer, frameTime: f32) {
+        // Update the timer
         if !timer.done() {
             timer.update(frameTime as f64);
             return;
         }
 
+        // Set a new velocity if it's zero
         if self.vel.x == 0.0 && self.vel.y == 0.0 {
-            self.vel = Vector2::new(-1.0, 1.0);
+            let mut rng = rand::rng();
+            let mut randomVelX: f32 = rng.random_range(-1..1) as f32;
+            let mut randomVelY: f32 = rng.random_range(-1..1) as f32;
+
+            // Ensure the ball is moving both up/down and left/right in the event that the RNG sets
+            // either one of them or the both of them to zero because that that would trap then the
+            // ball would just get stuck in an infinite loop moving the same way
+            if randomVelX == 0.0 {
+                randomVelX = 1.0;
+            }
+            if randomVelY == 0.0 {
+                randomVelY = 1.0;
+            }
+
+            // Set the velocity
+            self.vel = Vector2::new(randomVelX, randomVelY);
         }
 
         // Ensure ball doesn't go out of the screen
